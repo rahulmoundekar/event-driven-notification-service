@@ -1,12 +1,17 @@
 package com.rahul.notification.consumer;
 
+import com.rahul.notification.event.EventTypes;
 import com.rahul.notification.event.UserRegisteredEvent;
 import com.rahul.notification.exception.EmailDeliveryException;
 import com.rahul.notification.exception.InvalidNotificationException;
+import com.rahul.notification.exception.UnsupportedEventVersionException;
+import com.rahul.notification.observability.CorrelationIdConstants;
 import com.rahul.notification.service.IdempotencyService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.slf4j.MDC;
 import org.springframework.kafka.annotation.KafkaListener;
+import org.springframework.messaging.handler.annotation.Header;
 import org.springframework.stereotype.Component;
 
 @Slf4j
@@ -19,22 +24,66 @@ public class EmailNotificationConsumer {
     private final IdempotencyService idempotencyService;
 
     @KafkaListener(topics = "notifications.events", groupId = "email-service", containerFactory = "kafkaListenerContainerFactory")
-    public void consume(UserRegisteredEvent event) {
+    public void consume(UserRegisteredEvent event, @Header(name = CorrelationIdConstants.KAFKA_HEADER, required = false) String correlationId) {
 
-        log.info("Received event: eventId={}, userId={}, email={}", event.eventId(), event.userId(), event.payload().email());
+        MDC.put(CorrelationIdConstants.MDC_KEY, correlationId);
 
-        if (idempotencyService.alreadyProcessed(event.eventId(), CONSUMER_NAME)) {
+        log.info("Received event: eventId={}, type={}, version={}, correlationId={}, userId={}", event.eventId(), event.eventType(), event.eventVersion(), correlationId, event.aggregateId());
 
-            log.warn("Duplicate event detected. Skipping eventId={}", event.eventId());
+        validateEvent(event);
+        try {
+            if (idempotencyService.alreadyProcessed(event.eventId(), CONSUMER_NAME)) {
 
-            return;
+                log.warn("Duplicate event detected. Skipping eventId={}", event.eventId());
+
+                return;
+            }
+
+            switch (event.eventVersion()) {
+
+                case 1 -> handleV1(event);
+
+                default ->
+                        throw new UnsupportedEventVersionException("Unsupported USER_REGISTERED event version: " + event.eventVersion());
+            }
+
+            idempotencyService.markProcessed(event.eventId(), CONSUMER_NAME);
+        } finally {
+            MDC.remove(CorrelationIdConstants.MDC_KEY);
+        }
+    }
+
+    private void handleV1(UserRegisteredEvent event) {
+
+        if (!EventTypes.USER_REGISTERED.equals(event.eventType())) {
+
+            throw new InvalidNotificationException("Unsupported event type: " + event.eventType());
         }
 
         sendWelcomeEmail(event);
+    }
 
-        idempotencyService.markProcessed(event.eventId(), CONSUMER_NAME);
+    private void validateEvent(UserRegisteredEvent event) {
 
-        log.info("Event processed successfully: eventId={}", event.eventId());
+        if (event.eventId() == null || event.eventId().isBlank()) {
+
+            throw new InvalidNotificationException("eventId is required");
+        }
+
+        if (event.eventType() == null || event.eventType().isBlank()) {
+
+            throw new InvalidNotificationException("eventType is required");
+        }
+
+        if (event.aggregateId() == null || event.aggregateId().isBlank()) {
+
+            throw new InvalidNotificationException("aggregateId is required");
+        }
+
+        if (event.payload() == null) {
+
+            throw new InvalidNotificationException("payload is required");
+        }
     }
 
     private void sendWelcomeEmail(UserRegisteredEvent event) {

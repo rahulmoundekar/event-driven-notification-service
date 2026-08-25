@@ -93,6 +93,9 @@ public class OutboxEvent {
     @Column(name = "claimed_by")
     private String claimedBy;
 
+    @Column(name = "correlation_id")
+    private String correlationId;
+
     protected OutboxEvent() {
     }
 
@@ -101,14 +104,15 @@ public class OutboxEvent {
             String eventType,
             String aggregateType,
             String aggregateId,
-            String payload) {
+            String payload,
+            String correlationId) {
 
         this.eventId = eventId;
         this.eventType = eventType;
         this.aggregateType = aggregateType;
         this.aggregateId = aggregateId;
         this.payload = payload;
-
+        this.correlationId = correlationId;
         this.status = OutboxStatus.NEW;
         this.createdAt = Instant.now();
 

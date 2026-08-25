@@ -33,3 +33,11 @@ management:
         include:
           - health
           - info
+          - metrics
+  tracing:
+    sampling:
+      probability: 1.0
+
+logging:
+  pattern:
+    correlation: "[traceId=%X{traceId:-},spanId=%X{spanId:-},correlationId=%X{correlationId:-}] "

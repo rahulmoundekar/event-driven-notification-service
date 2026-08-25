@@ -13,6 +13,7 @@ public class OutboxStateService {
 
     private final OutboxEventRepository outboxRepository;
     private final OutboxRetryPolicy retryPolicy;
+    private final OutboxMetrics outboxMetrics;
 
     @Transactional
     public void markPublished(Long outboxId) {
@@ -36,7 +37,7 @@ public class OutboxStateService {
         }
 
         Instant nextAttempt = Instant.now().plus(retryPolicy.nextDelay(currentRetry));
-
+        outboxMetrics.incrementRetry();
         outboxRepository.markFailed(outboxId, exception.getMessage(), nextAttempt);
     }
 }
