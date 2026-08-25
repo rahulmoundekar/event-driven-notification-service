@@ -2,12 +2,12 @@ package com.rahul.notification.event;
 
 import java.time.Instant;
 
-public record UserRegisteredEvent(
+public record EventEnvelope<T>(
         String eventId,
         String eventType,
         int eventVersion,
         Instant occurredAt,
         String aggregateId,
-        UserRegisteredPayload payload
+        T payload
 ) {
 }

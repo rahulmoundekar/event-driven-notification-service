@@ -16,6 +16,12 @@ spring:
 
   kafka:
     bootstrap-servers: localhost:9092
+    producer:
+      properties:
+        request.timeout.ms: 3000
+        delivery.timeout.ms: 5000
+        retry.backoff.ms: 1000
+      retries: 0
 
 server:
   port: 8081

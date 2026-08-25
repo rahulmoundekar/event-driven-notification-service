@@ -5,9 +5,9 @@ services:
     container_name: notification-postgres
     restart: unless-stopped
     environment:
-      POSTGRES_DB: notification_db
-      POSTGRES_USER: notification_user
-      POSTGRES_PASSWORD: notification_password
+      POSTGRES_DB: event-driven-notification
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: root
     ports:
       - "5432:5432"
     volumes:

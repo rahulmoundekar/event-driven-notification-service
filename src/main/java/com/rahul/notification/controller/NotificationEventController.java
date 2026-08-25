@@ -32,7 +32,7 @@ public class NotificationEventController {
 
         UserRegisteredEvent event =
                 new UserRegisteredEvent(
-                        UUID.randomUUID().toString(),
+                        request.userId(),
                         "USER_REGISTERED",
                         1,
                         Instant.now(),

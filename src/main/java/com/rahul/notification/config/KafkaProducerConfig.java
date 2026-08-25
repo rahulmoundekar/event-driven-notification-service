@@ -18,33 +18,50 @@ import java.util.Map;
 public class KafkaProducerConfig {
 
     @Bean
-    public ProducerFactory<String, UserRegisteredEvent> producerFactory(
-            @Value("${spring.kafka.bootstrap-servers}") String bootstrapServers) {
+    public ProducerFactory<String, UserRegisteredEvent> producerFactory(@Value("${spring.kafka.bootstrap-servers}") String bootstrapServers) {
 
         Map<String, Object> properties = new HashMap<>();
 
-        properties.put(
-                ProducerConfig.BOOTSTRAP_SERVERS_CONFIG,
-                bootstrapServers
-        );
+        properties.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, bootstrapServers);
 
-        properties.put(
-                ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG,
-                StringSerializer.class
-        );
+        properties.put(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, StringSerializer.class);
 
-        properties.put(
-                ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG,
-                JacksonJsonSerializer.class
-        );
+        properties.put(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, JacksonJsonSerializer.class);
 
         return new DefaultKafkaProducerFactory<>(properties);
     }
 
     @Bean
-    public KafkaTemplate<String, UserRegisteredEvent> kafkaTemplate(
-            ProducerFactory<String, UserRegisteredEvent> producerFactory) {
+    public KafkaTemplate<String, UserRegisteredEvent> kafkaTemplate(ProducerFactory<String, UserRegisteredEvent> producerFactory) {
 
         return new KafkaTemplate<>(producerFactory);
+    }
+
+    @Bean
+    public ProducerFactory<String, String> outboxProducerFactory(@Value("${spring.kafka.bootstrap-servers}") String bootstrapServers) {
+
+        Map<String, Object> properties = new HashMap<>();
+
+        properties.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, bootstrapServers);
+
+        properties.put(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, StringSerializer.class);
+
+        properties.put(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, StringSerializer.class);
+
+        properties.put(ProducerConfig.REQUEST_TIMEOUT_MS_CONFIG, 3000);
+
+        properties.put(ProducerConfig.DELIVERY_TIMEOUT_MS_CONFIG, 5000);
+
+        properties.put(ProducerConfig.RETRIES_CONFIG, 0);
+
+        properties.put(ProducerConfig.RETRY_BACKOFF_MS_CONFIG, 1000);
+
+        return new DefaultKafkaProducerFactory<>(properties);
+    }
+
+    @Bean
+    public KafkaTemplate<String, String> outboxKafkaTemplate(ProducerFactory<String, String> outboxProducerFactory) {
+
+        return new KafkaTemplate<>(outboxProducerFactory);
     }
 }
