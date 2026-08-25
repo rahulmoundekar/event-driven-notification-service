@@ -6,6 +6,7 @@ import com.rahul.notification.exception.EmailDeliveryException;
 import com.rahul.notification.exception.InvalidNotificationException;
 import com.rahul.notification.exception.UnsupportedEventVersionException;
 import com.rahul.notification.observability.CorrelationIdConstants;
+import com.rahul.notification.observability.NotificationMetrics;
 import com.rahul.notification.service.IdempotencyService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -22,6 +23,7 @@ public class EmailNotificationConsumer {
     private static final String CONSUMER_NAME = "email-service";
 
     private final IdempotencyService idempotencyService;
+    private final NotificationMetrics notificationMetrics;
 
     @KafkaListener(topics = "notifications.events", groupId = "email-service", containerFactory = "kafkaListenerContainerFactory")
     public void consume(UserRegisteredEvent event, @Header(name = CorrelationIdConstants.KAFKA_HEADER, required = false) String correlationId) {
@@ -35,7 +37,7 @@ public class EmailNotificationConsumer {
             if (idempotencyService.alreadyProcessed(event.eventId(), CONSUMER_NAME)) {
 
                 log.warn("Duplicate event detected. Skipping eventId={}", event.eventId());
-
+                notificationMetrics.incrementDuplicate();
                 return;
             }
 
@@ -48,6 +50,7 @@ public class EmailNotificationConsumer {
             }
 
             idempotencyService.markProcessed(event.eventId(), CONSUMER_NAME);
+            notificationMetrics.incrementProcessed();
         } finally {
             MDC.remove(CorrelationIdConstants.MDC_KEY);
         }
@@ -86,7 +89,7 @@ public class EmailNotificationConsumer {
         }
     }
 
-    private void sendWelcomeEmail(UserRegisteredEvent event) {
+    /*private void sendWelcomeEmail(UserRegisteredEvent event) {
 
         String email = event.payload().email();
 
@@ -101,5 +104,23 @@ public class EmailNotificationConsumer {
         }
 
         log.info("Sending welcome email to {}", email);
+    }*/
+
+    private void sendWelcomeEmail(UserRegisteredEvent event) {
+
+        try {
+            Thread.sleep(5000);
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            throw new IllegalStateException(
+                    "Notification interrupted",
+                    e
+            );
+        }
+
+        log.info(
+                "Sending welcome email to {}",
+                event.payload().email()
+        );
     }
 }
