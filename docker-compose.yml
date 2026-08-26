@@ -2,29 +2,129 @@ services:
 
   postgres:
     image: postgres:17
+
+    container_name: notification-postgres
+
     environment:
       POSTGRES_DB: event-driven-notification
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: root
+
     ports:
       - "5432:5432"
 
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          "pg_isready -U postgres -d event-driven-notification"
+        ]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+    restart: unless-stopped
+
+
   kafka:
     image: apache/kafka:4.2.1
+
+    container_name: notification-kafka
+
     ports:
-      - "9092:9092"
+      - "29092:29092"
+
+    environment:
+
+      # KRaft
+      KAFKA_NODE_ID: 1
+      KAFKA_PROCESS_ROLES: broker,controller
+
+      # Listeners
+      KAFKA_LISTENERS: PLAINTEXT://:9092,EXTERNAL://:29092,CONTROLLER://:9093
+
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9092,EXTERNAL://localhost:29092
+
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: CONTROLLER:PLAINTEXT,PLAINTEXT:PLAINTEXT,EXTERNAL:PLAINTEXT
+
+      KAFKA_CONTROLLER_LISTENER_NAMES: CONTROLLER
+
+      KAFKA_CONTROLLER_QUORUM_VOTERS: 1@kafka:9093
+
+      KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT
+
+      # Single-node development settings
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+
+      KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
+
+      KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
+
+      KAFKA_MIN_INSYNC_REPLICAS: 1
+
+      KAFKA_GROUP_INITIAL_REBALANCE_DELAY_MS: 0
+
+      # Keep auto topic creation enabled for local development
+      KAFKA_AUTO_CREATE_TOPICS_ENABLE: "true"
+
+    volumes:
+      - kafka_data:/var/lib/kafka/data
+
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          "/opt/kafka/bin/kafka-broker-api-versions.sh --bootstrap-server localhost:9092 > /dev/null 2>&1"
+        ]
+      interval: 10s
+      timeout: 10s
+      retries: 10
+      start_period: 20s
+
+    restart: unless-stopped
+
 
   notification-service:
-    build: .
-    depends_on:
-      - postgres
-      - kafka
+    build:
+      context: .
+      dockerfile: Dockerfile
+
+    container_name: event-driven-notification-service
+
+    ports:
+      - "8081:8081"
+
     environment:
+
       DB_HOST: postgres
       DB_PORT: 5432
       DB_NAME: event-driven-notification
       DB_USERNAME: postgres
       DB_PASSWORD: root
+
       KAFKA_BOOTSTRAP_SERVERS: kafka:9092
-    ports:
-      - "8081:8081"
+
+      SERVER_PORT: 8081
+
+      JAVA_TOOL_OPTIONS: "-Duser.timezone=UTC"
+
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+      kafka:
+        condition: service_healthy
+
+    restart: unless-stopped
+
+
+volumes:
+
+  postgres_data:
+    name: notification-postgres-data
+
+  kafka_data:
+    name: notification-kafka-data

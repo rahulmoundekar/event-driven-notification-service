@@ -1,54 +1,42 @@
 spring:
-
   application:
     name: event-driven-notification-service
 
   datasource:
-    url: jdbc:postgresql://localhost:5432/event-driven-notification
-    username: postgres
-    password: root
+    url: jdbc:postgresql://${DB_HOST:localhost}:${DB_PORT:5432}/${DB_NAME:event-driven-notification}
+    username: ${DB_USERNAME:postgres}
+    password: ${DB_PASSWORD:root}
 
   jpa:
     hibernate:
       ddl-auto: update
-    show-sql: false
     open-in-view: false
 
   kafka:
     bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS:localhost:9092}
+
     producer:
+      retries: ${KAFKA_PRODUCER_RETRIES:0}
       properties:
-        request.timeout.ms: 3000
-        delivery.timeout.ms: 5000
-        retry.backoff.ms: 1000
-      retries: 0
+        request.timeout.ms: ${KAFKA_REQUEST_TIMEOUT_MS:3000}
+        delivery.timeout.ms: ${KAFKA_DELIVERY_TIMEOUT_MS:5000}
+        retry.backoff.ms: ${KAFKA_RETRY_BACKOFF_MS:1000}
+
+    consumer:
+      auto-offset-reset: ${KAFKA_AUTO_OFFSET_RESET:earliest}
+      enable-auto-commit: ${KAFKA_ENABLE_AUTO_COMMIT:false}
 
 server:
-  port: 8081
+  port: ${SERVER_PORT:8081}
 
 management:
   endpoints:
     web:
       exposure:
-        include:
-          - health
-          - info
-          - metrics
+        include: health,info,metrics
+
   endpoint:
     health:
       probes:
         enabled: true
       show-details: always
-  tracing:
-    sampling:
-      probability: 1.0
-
-logging:
-  pattern:
-    correlation: "[traceId=%X{traceId:-},spanId=%X{spanId:-},correlationId=%X{correlationId:-}] "
-
-info:
-  app:
-    name: event-driven-notification-service
-    version: 1.0.0
-    description: Event-driven notification service using Kafka
