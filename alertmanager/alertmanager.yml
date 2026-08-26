@@ -1,0 +1,40 @@
+global:
+  resolve_timeout: 5m
+
+route:
+  group_by:
+    - alertname
+    - service
+    - severity
+
+  group_wait: 10s
+  group_interval: 30s
+  repeat_interval: 1h
+
+  receiver: warning-receiver
+
+  routes:
+
+    - matchers:
+        - severity="critical"
+      receiver: critical-receiver
+
+    - matchers:
+        - severity="warning"
+      receiver: warning-receiver
+
+
+receivers:
+
+  - name: critical-receiver
+
+    webhook_configs:
+      - url: "http://host.docker.internal:8082/alerts/critical"
+        send_resolved: true
+
+
+  - name: warning-receiver
+
+    webhook_configs:
+      - url: "http://host.docker.internal:8082/alerts/warning"
+        send_resolved: true

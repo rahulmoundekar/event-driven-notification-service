@@ -1,0 +1,102 @@
+groups:
+
+  - name: notification-service-alerts
+
+    rules:
+
+      - alert: NotificationServiceDown
+        expr: up{job="notification-service"} == 0
+        for: 1m
+        labels:
+          severity: critical
+          service: notification-service
+        annotations:
+          summary: "Notification service is down"
+          description: "The event-driven notification service has been unreachable for more than 1 minute."
+
+
+      - alert: NotificationProcessingFailures
+        expr: rate(notification_events_failed_total[5m]) > 0
+        for: 2m
+        labels:
+          severity: warning
+          service: notification-service
+        annotations:
+          summary: "Notification processing failures detected"
+          description: "Notification processing failures have been detected continuously for more than 2 minutes."
+
+
+      - alert: OutboxPublishingFailures
+        expr: rate(outbox_events_failed_total[5m]) > 0
+        for: 2m
+        labels:
+          severity: critical
+          service: notification-service
+        annotations:
+          summary: "Outbox publishing failures detected"
+          description: "The Outbox publisher is experiencing publishing failures."
+
+
+      - alert: OutboxRetriesIncreasing
+        expr: rate(outbox_events_retried_total[5m]) > 0
+        for: 5m
+        labels:
+          severity: warning
+          service: notification-service
+        annotations:
+          summary: "Outbox retries are increasing"
+          description: "Outbox events have been retrying continuously for more than 5 minutes."
+
+
+      - alert: UnsupportedEventVersions
+        expr: rate(notification_events_unsupported_version_total[5m]) > 0
+        for: 2m
+        labels:
+          severity: warning
+          service: notification-service
+        annotations:
+          summary: "Unsupported event versions detected"
+          description: "The notification consumer is receiving unsupported event versions."
+
+
+      - alert: HighDuplicateEventRate
+        expr: rate(notification_events_duplicate_total[5m]) > 1
+        for: 5m
+        labels:
+          severity: warning
+          service: notification-service
+        annotations:
+          summary: "High duplicate event rate"
+          description: "Duplicate notification events are occurring at a sustained high rate."
+
+
+      - alert: JVMHeapUsageHigh
+        expr: >
+          100 *
+          sum(jvm_memory_used_bytes{area="heap"})
+          /
+          sum(jvm_memory_max_bytes{area="heap"})
+          > 85
+        for: 5m
+        labels:
+          severity: warning
+          service: notification-service
+        annotations:
+          summary: "JVM heap usage is high"
+          description: "JVM heap utilization has exceeded 85% for more than 5 minutes."
+
+
+      - alert: JVMHeapUsageCritical
+        expr: >
+          100 *
+          sum(jvm_memory_used_bytes{area="heap"})
+          /
+          sum(jvm_memory_max_bytes{area="heap"})
+          > 95
+        for: 2m
+        labels:
+          severity: critical
+          service: notification-service
+        annotations:
+          summary: "JVM heap usage is critical"
+          description: "JVM heap utilization has exceeded 95%."
