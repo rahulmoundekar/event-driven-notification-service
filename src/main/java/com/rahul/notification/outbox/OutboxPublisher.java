@@ -56,7 +56,9 @@ public class OutboxPublisher {
         try {
 
             SendResult<String, String> result = outboxKafkaTemplate.send(record).get(6, TimeUnit.SECONDS);
+
             outboxMetrics.incrementPublished();
+
             log.info("OUTBOX KAFKA SEND SUCCESS: eventId={}, correlationId={}, partition={}, offset={}", event.getEventId(), correlationId, result.getRecordMetadata().partition(), result.getRecordMetadata().offset());
 
             stateService.markPublished(event.getId());
@@ -67,21 +69,5 @@ public class OutboxPublisher {
 
             stateService.markPublishFailed(event.getId(), exception);
         }
-    }
-
-    private void handleResult(OutboxEvent event, SendResult<String, String> result, Throwable exception) {
-
-        if (exception != null) {
-
-            log.error("OUTBOX KAFKA SEND FAILED: eventId={}, errorType={}, message={}", event.getEventId(), exception.getClass().getName(), exception.getMessage(), exception);
-
-            stateService.markPublishFailed(event.getId(), exception);
-
-            return;
-        }
-
-        log.info("OUTBOX KAFKA SEND SUCCESS: eventId={}, partition={}, offset={}", event.getEventId(), result.getRecordMetadata().partition(), result.getRecordMetadata().offset());
-
-        stateService.markPublished(event.getId());
     }
 }

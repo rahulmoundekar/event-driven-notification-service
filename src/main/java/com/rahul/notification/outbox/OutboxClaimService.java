@@ -19,6 +19,7 @@ public class OutboxClaimService {
 
     private final OutboxEventRepository outboxEventRepository;
     private final PublisherInstanceIdentity instanceIdentity;
+    private final OutboxMetrics outboxMetrics;
 
     @Transactional
     public List<OutboxEvent> claimBatch(int batchSize) {
@@ -36,6 +37,8 @@ public class OutboxClaimService {
             event.setClaimedAt(now);
 
             event.setClaimedBy(instanceIdentity.getInstanceId());
+
+            outboxMetrics.incrementClaimed();
         }
 
         return events;

@@ -63,7 +63,8 @@ public class KafkaConsumerConfig {
     public ConcurrentKafkaListenerContainerFactory<String, UserRegisteredEvent>
     kafkaListenerContainerFactory(
             ConsumerFactory<String, UserRegisteredEvent> consumerFactory,
-            CommonErrorHandler kafkaErrorHandler) {
+            CommonErrorHandler kafkaErrorHandler, @Value("${spring.kafka.listener.concurrency:3}")
+            int concurrency) {
 
         var factory =
                 new ConcurrentKafkaListenerContainerFactory<String, UserRegisteredEvent>();
@@ -72,6 +73,12 @@ public class KafkaConsumerConfig {
 
         factory.setCommonErrorHandler(kafkaErrorHandler);
 
+        factory.setConcurrency(concurrency);
+        factory.getContainerProperties()
+                .setShutdownTimeout(30000L);
+
         return factory;
     }
+
+
 }

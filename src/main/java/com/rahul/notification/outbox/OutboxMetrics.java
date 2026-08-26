@@ -7,28 +7,56 @@ import org.springframework.stereotype.Component;
 @Component
 public class OutboxMetrics {
 
-    private final Counter publishedCounter;
-    private final Counter failedCounter;
-    private final Counter retryCounter;
+    private final Counter claimed;
+
+    private final Counter published;
+
+    private final Counter failed;
+
+    private final Counter retried;
+
+    private final Counter staleRecovered;
 
     public OutboxMetrics(MeterRegistry registry) {
 
-        this.publishedCounter = Counter.builder("outbox.published").description("Successfully published outbox events").register(registry);
+        claimed = Counter.builder("outbox.events.claimed")
+                .description("Number of outbox events claimed")
+                .register(registry);
 
-        this.failedCounter = Counter.builder("outbox.failed").description("Outbox publishing failures").register(registry);
+        published = Counter.builder("outbox.events.published")
+                .description("Number of outbox events published")
+                .register(registry);
 
-        this.retryCounter = Counter.builder("outbox.retry").description("Outbox retry attempts").register(registry);
+        failed = Counter.builder("outbox.events.failed")
+                .description("Number of outbox publishing failures")
+                .register(registry);
+
+        retried = Counter.builder("outbox.events.retried")
+                .description("Number of outbox retries")
+                .register(registry);
+
+        staleRecovered = Counter.builder("outbox.events.stale.recovered")
+                .description("Number of stale processing events recovered")
+                .register(registry);
+    }
+
+    public void incrementClaimed() {
+        claimed.increment();
     }
 
     public void incrementPublished() {
-        publishedCounter.increment();
+        published.increment();
     }
 
     public void incrementFailed() {
-        failedCounter.increment();
+        failed.increment();
     }
 
-    public void incrementRetry() {
-        retryCounter.increment();
+    public void incrementRetried() {
+        retried.increment();
+    }
+
+    public void incrementStaleRecovered() {
+        staleRecovered.increment();
     }
 }

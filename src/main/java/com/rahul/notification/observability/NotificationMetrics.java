@@ -7,28 +7,51 @@ import org.springframework.stereotype.Component;
 @Component
 public class NotificationMetrics {
 
-    private final Counter processedCounter;
-    private final Counter duplicateCounter;
-    private final Counter failedCounter;
+    private final Counter processed;
 
-    public NotificationMetrics(MeterRegistry registry) {
+    private final Counter duplicate;
 
-        this.processedCounter = Counter.builder("notification.processed").description("Successfully processed notifications").register(registry);
+    private final Counter failed;
 
-        this.duplicateCounter = Counter.builder("notification.duplicate").description("Duplicate notification events").register(registry);
+    private final Counter unsupportedVersion;
 
-        this.failedCounter = Counter.builder("notification.failed").description("Failed notification processing").register(registry);
+    public NotificationMetrics(
+            MeterRegistry registry) {
+
+        processed =
+                Counter.builder("notification.events.processed")
+                        .description("Successfully processed notification events")
+                        .register(registry);
+
+        duplicate =
+                Counter.builder("notification.events.duplicate")
+                        .description("Duplicate notification events")
+                        .register(registry);
+
+        failed =
+                Counter.builder("notification.events.failed")
+                        .description("Notification processing failures")
+                        .register(registry);
+
+        unsupportedVersion =
+                Counter.builder("notification.events.unsupported.version")
+                        .description("Unsupported notification event versions")
+                        .register(registry);
     }
 
     public void incrementProcessed() {
-        processedCounter.increment();
+        processed.increment();
     }
 
     public void incrementDuplicate() {
-        duplicateCounter.increment();
+        duplicate.increment();
     }
 
     public void incrementFailed() {
-        failedCounter.increment();
+        failed.increment();
+    }
+
+    public void incrementUnsupportedVersion() {
+        unsupportedVersion.increment();
     }
 }
