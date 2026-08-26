@@ -1,0 +1,15 @@
+spring:
+  jpa:
+    hibernate:
+      ddl-auto: create-drop
+
+  kafka:
+    consumer:
+      auto-offset-reset: earliest
+      enable-auto-commit: false
+
+  main:
+    allow-bean-definition-overriding: true
+
+server:
+  port: 0

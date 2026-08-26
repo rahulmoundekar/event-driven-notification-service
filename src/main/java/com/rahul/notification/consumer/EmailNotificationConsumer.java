@@ -14,6 +14,7 @@ import org.slf4j.MDC;
 import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.messaging.handler.annotation.Header;
 import org.springframework.stereotype.Component;
+import org.springframework.transaction.annotation.Transactional;
 
 @Slf4j
 @Component
@@ -26,6 +27,7 @@ public class EmailNotificationConsumer {
     private final NotificationMetrics notificationMetrics;
 
     @KafkaListener(topics = "notifications.events", groupId = "email-service", containerFactory = "kafkaListenerContainerFactory")
+    @Transactional
     public void consume(UserRegisteredEvent event, @Header(name = CorrelationIdConstants.KAFKA_HEADER, required = false) String correlationId) {
 
         MDC.put(CorrelationIdConstants.MDC_KEY, correlationId);
@@ -49,7 +51,21 @@ public class EmailNotificationConsumer {
                         throw new UnsupportedEventVersionException("Unsupported USER_REGISTERED event version: " + event.eventVersion());
             }
 
+            log.info(
+                    "Marking event as processed: eventId={}, consumer={}",
+                    event.eventId(),
+                    CONSUMER_NAME
+            );
+
+
             idempotencyService.markProcessed(event.eventId(), CONSUMER_NAME);
+
+            log.info(
+                    "Event marked as processed: eventId={}, consumer={}",
+                    event.eventId(),
+                    CONSUMER_NAME
+            );
+
             notificationMetrics.incrementProcessed();
         } finally {
             MDC.remove(CorrelationIdConstants.MDC_KEY);

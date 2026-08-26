@@ -2,49 +2,29 @@ services:
 
   postgres:
     image: postgres:17
-    container_name: notification-postgres
-    restart: unless-stopped
     environment:
       POSTGRES_DB: event-driven-notification
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: root
     ports:
       - "5432:5432"
-    volumes:
-      - postgres_data:/var/lib/postgresql/data
 
   kafka:
-    image: apache/kafka:4.0.0
-    container_name: notification-kafka
-    restart: unless-stopped
+    image: apache/kafka:4.2.1
     ports:
       - "9092:9092"
+
+  notification-service:
+    build: .
+    depends_on:
+      - postgres
+      - kafka
     environment:
-      KAFKA_NODE_ID: 1
-      KAFKA_PROCESS_ROLES: broker,controller
-
-      KAFKA_LISTENERS: PLAINTEXT://:9092,CONTROLLER://:9093
-
-      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://localhost:9092
-
-      KAFKA_CONTROLLER_LISTENER_NAMES: CONTROLLER
-
-      KAFKA_CONTROLLER_QUORUM_VOTERS: 1@kafka:9093
-
-      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: >-
-        CONTROLLER:PLAINTEXT,
-        PLAINTEXT:PLAINTEXT
-
-      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
-
-      KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
-
-      KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
-
-      KAFKA_GROUP_INITIAL_REBALANCE_DELAY_MS: 0
-
-      KAFKA_NUM_PARTITIONS: 3
-
-volumes:
-
-  postgres_data:
+      DB_HOST: postgres
+      DB_PORT: 5432
+      DB_NAME: event-driven-notification
+      DB_USERNAME: postgres
+      DB_PASSWORD: root
+      KAFKA_BOOTSTRAP_SERVERS: kafka:9092
+    ports:
+      - "8081:8081"
