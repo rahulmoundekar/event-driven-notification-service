@@ -16,6 +16,19 @@
 - Prometheus, Grafana and Alertmanager observability
 - Docker Compose and Docker Secrets
 
+## 🧭 Engineering Case Study
+
+| Concern | Design decision | Why it matters |
+|---|---|---|
+| Dual-write consistency | Transactional Outbox | Business state and pending events commit together |
+| Duplicate delivery | Consumer idempotency using event identity | Reprocessing remains safe |
+| Consumer failure | Retry flow + Dead Letter Topic | Temporary failures do not become permanent data loss |
+| Operability | Micrometer + Prometheus + Grafana + alerts | Failure behavior is visible and diagnosable |
+
+<p align="center">
+  <img src="assets/architecture.svg" width="100%" alt="Reliable event-driven notification architecture"/>
+</p>
+
 ## Overview
 
 This project implements a reliable event-driven notification workflow:
