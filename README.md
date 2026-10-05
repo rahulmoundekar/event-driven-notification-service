@@ -1,6 +1,20 @@
-# Event-Driven Notification Service
+# 📨 Event-Driven Notification Service
 
-Production-style Spring Boot notification platform demonstrating event-driven architecture, Transactional Outbox, Kafka, idempotent consumers, retries, Dead Letter Topics (DLT), event versioning, correlation IDs, observability, Docker Compose, Prometheus, Grafana, Alertmanager, and Docker Secrets.
+<p align="center"><strong>Reliable event-driven notifications with transactional outbox, Kafka and failure recovery.</strong></p>
+
+<p align="center"><img src="https://img.shields.io/badge/Java-21-ED8B00?style=for-the-badge&logo=openjdk&logoColor=white" alt="Java 21"/> <img src="https://img.shields.io/badge/Spring_Boot-4.x-6DB33F?style=for-the-badge&logo=springboot&logoColor=white" alt="Spring Boot"/> <img src="https://img.shields.io/badge/Kafka-000000?style=for-the-badge&logo=apachekafka&logoColor=white" alt="Kafka"/> <img src="https://img.shields.io/badge/Prometheus-E6522C?style=for-the-badge&logo=prometheus&logoColor=white" alt="Prometheus"/></p>
+
+> A production-style notification platform built around the idea that database state and published events must remain consistent, even when consumers fail or messages are retried.
+
+## 🎯 What This Project Demonstrates
+
+- Transactional Outbox pattern
+- Kafka event publishing and consumption
+- Idempotent consumers
+- Retry topics and Dead Letter Topics (DLT)
+- Event versioning and correlation IDs
+- Prometheus, Grafana and Alertmanager observability
+- Docker Compose and Docker Secrets
 
 ## Overview
 
